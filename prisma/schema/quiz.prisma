@@ -5,10 +5,11 @@ model QuizSettings {
 }
 
 model QuizStatus {
-  id         Int      @id @default(1) // There should only be one row in this table
-  is_active  Boolean  @default(false)
-  round      Int?
-  updated_at DateTime @updatedAt
+  id             Int      @id @default(1) // There should only be one row in this table
+  is_active      Boolean  @default(false)
+  round          Int?
+  remaining_time Int?
+  updated_at     DateTime @updatedAt
 
   current_question Question? @relation(fields: [round], references: [id])
 }

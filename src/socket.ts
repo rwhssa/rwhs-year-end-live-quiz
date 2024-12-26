@@ -12,12 +12,28 @@ export default function configureSocket() {
       handleStudentConnection(socket);
     } else if (role === AuthRole.Host) {
       handleHostConnection(socket);
+
+      socket.on("status-change", handleStatusChange);
     } else {
       socket.disconnect();
     }
   });
 
-  io.on("status-change", handleStatusChange);
+  autoNotifyHostInfo();
+}
+
+interface HostInfo {
+  num_students: number;
+}
+
+async function autoNotifyHostInfo() {
+  setInterval(async () => {
+    const num_students = io.sockets.adapter.rooms.get("student")?.size;
+    const data: HostInfo = {
+      num_students: num_students || 0,
+    };
+    io.to("host").emit("host-info", data);
+  }, 3000);
 }
 
 async function handleStudentConnection(socket: Socket) {
@@ -46,28 +62,112 @@ async function handleHostConnection(socket: Socket) {
 interface StatusChangeData {
   is_active?: boolean;
   round?: number;
+  remaining_time?: number;
+}
+
+let countdownInterval: NodeJS.Timer | null = null;
+
+async function startCountdown(initial_time: number, round: number) {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+  }
+
+  const result = await prisma.quizStatus.update({
+    where: { id: 1 },
+    data: { remaining_time: initial_time },
+  });
+  io.emit("quiz-status", result);
+
+  countdownInterval = setInterval(async () => {
+    const status = await prisma.quizStatus.findFirst();
+    if (!status || !status.is_active || status.remaining_time === null) {
+      clearInterval(countdownInterval!);
+      countdownInterval = null;
+      return;
+    }
+
+    const new_time = status.remaining_time - 1;
+    if (new_time <= 0) {
+      const result = await prisma.quizStatus.update({
+        where: { id: 1 },
+        data: {
+          remaining_time: 0,
+        },
+      });
+      clearInterval(countdownInterval!);
+      countdownInterval = null;
+      io.emit("quiz-status", result);
+      await notifyQuestionResult(round);
+      return;
+    }
+
+    const result = await prisma.quizStatus.update({
+      where: { id: 1 },
+      data: { remaining_time: new_time },
+    });
+    io.emit("quiz-status", result);
+  }, 1000);
 }
 
 async function handleStatusChange(
-  socket: Socket,
   data: StatusChangeData,
+  callback: (response: { success: boolean }) => void
 ): Promise<void> {
   const current_status = await prisma.quizStatus.findFirst();
   if (!current_status) return;
 
-  // Round changed.
-  if (data.round && data.round !== current_status.round) {
-    await notifyQuestionResult(data.round);
+  if (data.round) {
+    const question = await prisma.question.findUnique({
+      where: { id: data.round },
+    });
+
+    if (!question) {
+      console.error(`Question with id ${data.round} not found`);
+      return;
+    }
+
+    if (data.round !== current_status.round || !current_status.is_active) {
+      // Stop existing countdown
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+
+      // Start new round
+      if (data.is_active && data.round !== undefined) {
+        const settings = await prisma.quizSettings.findFirst({
+          where: { id: 1 },
+        });
+        if (!settings) return;
+
+        const initial_time = settings.round_time_interval;
+        data.remaining_time = initial_time;
+      }
+
+      if (data.is_active && data.remaining_time) {
+        await startCountdown(data.remaining_time, data.round);
+      }
+    }
   }
 
-  await prisma.quizStatus.update({
-    where: {
-      id: 1,
-    },
-    data,
-  });
+  try {
+    const updated_status = await prisma.quizStatus.update({
+      where: {
+        id: 1,
+      },
+      data: {
+        is_active: data.is_active,
+        round: data.round,
+        remaining_time: data.remaining_time,
+      },
+    });
 
-  socket.broadcast.emit("quiz-status", data);
+    io.emit("quiz-status", updated_status);
+  } catch (error) {
+    console.error("Failed to update quiz status:", error);
+  }
+
+  callback({ success: true });
 }
 
 async function notifyQuizStatus(socket: Socket) {

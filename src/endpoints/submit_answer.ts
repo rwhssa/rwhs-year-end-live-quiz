@@ -16,7 +16,7 @@ const submitAnswer = async (req: Request, res: Response): Promise<void> => {
 
   const { id: student_id } = jwt.verify(
     token,
-    JWT_SECRET,
+    JWT_SECRET
   ) as StudentTokenPayload;
 
   const id = parseInt(req.params.id);
@@ -37,7 +37,7 @@ const submitAnswer = async (req: Request, res: Response): Promise<void> => {
 
   let transactions = [];
   for (const option of question.options) {
-    if (!body.correct_option_ids.includes(option.id)) return;
+    if (!body.correct_option_ids.includes(option.id)) continue;
 
     transactions.push(
       prisma.option.update({
@@ -51,7 +51,7 @@ const submitAnswer = async (req: Request, res: Response): Promise<void> => {
             },
           },
         },
-      }),
+      })
     );
   }
 

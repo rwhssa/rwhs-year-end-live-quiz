@@ -11,6 +11,12 @@ async function main() {
     create: {},
   });
 
+  await prisma.quizSettings.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {},
+  });
+
   await prisma.$disconnect();
 }
 
