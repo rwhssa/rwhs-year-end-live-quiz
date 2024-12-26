@@ -253,11 +253,11 @@ async function calculateScore(question_id: number) {
     let score = schoolClass.score;
     for (const option of question.options) {
       if (!option.is_correct) continue;
-      const num_students = option.answered_by.length;
+      const num_students = option.answered_by.length * 10;
       score += num_students;
     }
 
-    prisma.schoolClass.update({
+    await prisma.schoolClass.update({
       where: {
         id: schoolClass.id,
       },
