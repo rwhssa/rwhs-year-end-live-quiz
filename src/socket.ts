@@ -145,7 +145,8 @@ async function handleStatusChange(
       }
 
       if (data.is_active && data.remaining_time) {
-        await startCountdown(data.remaining_time, data.round);
+// TODO
+        startCountdown(data.remaining_time, data.round);
       }
     }
   }
