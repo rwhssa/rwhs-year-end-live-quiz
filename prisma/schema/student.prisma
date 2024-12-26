@@ -1,0 +1,17 @@
+model Student {
+  id       String  @id @default(cuid())
+  nickname String?
+
+  class    SchoolClass? @relation(fields: [class_id], references: [id])
+  class_id Int?
+
+  answered_questions Option[]
+}
+
+model SchoolClass {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  score Int    @default(0)
+
+  students Student[]
+}

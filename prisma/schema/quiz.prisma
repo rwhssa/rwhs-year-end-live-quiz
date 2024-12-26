@@ -1,0 +1,34 @@
+model QuizSettings {
+  id                  Int      @id @default(1) // There should only be one row in this table
+  round_time_interval Int      @default(10) // Time in seconds
+  updated_at          DateTime @updatedAt
+}
+
+model QuizStatus {
+  id         Int      @id @default(1) // There should only be one row in this table
+  is_active  Boolean  @default(false)
+  round      Int?
+  updated_at DateTime @updatedAt
+
+  current_question Question? @relation(fields: [round], references: [id])
+}
+
+model Question {
+  id        Int      @id @default(autoincrement())
+  text      String
+  image_url String?
+  options   Option[]
+
+  QuizStatus QuizStatus[]
+}
+
+model Option {
+  id          Int       @id @default(autoincrement())
+  text        String
+  image_url   String?
+  is_correct  Boolean
+  answered_by Student[]
+
+  question    Question @relation(fields: [question_id], references: [id])
+  question_id Int
+}
