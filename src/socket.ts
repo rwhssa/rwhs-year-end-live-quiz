@@ -116,6 +116,8 @@ async function handleStatusChange(
   const current_status = await prisma.quizStatus.findFirst();
   if (!current_status) return;
 
+  console.log("Status change:", data);
+
   if (data.round) {
     const question = await prisma.question.findUnique({
       where: { id: data.round },
@@ -146,7 +148,7 @@ async function handleStatusChange(
 
       if (data.is_active && data.remaining_time) {
         // TODO
-        await startCountdown(data.remaining_time, data.round);
+        startCountdown(data.remaining_time, data.round);
       }
     }
   }
