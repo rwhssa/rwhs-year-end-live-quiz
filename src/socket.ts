@@ -116,6 +116,8 @@ async function handleStatusChange(
   const current_status = await prisma.quizStatus.findFirst();
   if (!current_status) return;
 
+  callback({ success: true });
+
   if (data.round) {
     const question = await prisma.question.findUnique({
       where: { id: data.round },
@@ -145,8 +147,8 @@ async function handleStatusChange(
       }
 
       if (data.is_active && data.remaining_time) {
-// TODO
-        startCountdown(data.remaining_time, data.round);
+        // TODO
+        await startCountdown(data.remaining_time, data.round);
       }
     }
   }
@@ -167,8 +169,6 @@ async function handleStatusChange(
   } catch (error) {
     console.error("Failed to update quiz status:", error);
   }
-
-  callback({ success: true });
 }
 
 async function notifyQuizStatus(socket: Socket) {
