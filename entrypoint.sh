@@ -2,7 +2,9 @@
 set -e
 
 echo "Running database migrations..."
-bun prisma migrate deploy
+bun prisma migrate dev --name init
+bun prisma generate
+#bun prisma migrate deploy
 
 echo "Running database seeding..."
 bun seed

@@ -17,7 +17,7 @@ RUN bun build --compile --minify --sourcemap --bytecode src/index.ts --outfile u
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-EXPOSE 8787
+EXPOSE 3000
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["./ukhsc-system-api"]
