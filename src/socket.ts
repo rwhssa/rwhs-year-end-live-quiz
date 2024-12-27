@@ -164,6 +164,7 @@ async function handleStatusChange(
     });
 
     io.emit("quiz-status", updated_status);
+    console.log("Quiz status updated:", updated_status);
   } catch (error) {
     console.error("Failed to update quiz status:", error);
   }
