@@ -260,7 +260,10 @@ async function calculateScore(question_id: number) {
     let score = schoolClass.score;
     for (const option of question.options) {
       if (!option.is_correct) continue;
-      const num_students = option.answered_by.length * 10;
+      const answered_by_class = option.answered_by.filter(
+        (student) => student.class_id === schoolClass.id
+      );
+      const num_students = answered_by_class.length * 10;
       score += num_students;
     }
 
