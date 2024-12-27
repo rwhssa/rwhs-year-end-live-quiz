@@ -8,13 +8,19 @@ async function main() {
   await prisma.quizStatus.upsert({
     where: { id: 1 },
     update: {},
-    create: {},
+    create: {
+      is_active: false,
+      round: null,
+      remaining_time: null,
+    },
   });
 
   await prisma.quizSettings.upsert({
     where: { id: 1 },
     update: {},
-    create: {},
+    create: {
+      round_time_interval: 10,
+    },
   });
 
   await prisma.$disconnect();
