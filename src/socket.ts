@@ -115,6 +115,7 @@ async function handleStatusChange(
 ): Promise<void> {
   console.log("Status change:", data);
   const current_status = await prisma.quizStatus.findFirst();
+  console.log("Current status:", current_status);
   if (!current_status) return;
 
   console.log("Status change:", data);
